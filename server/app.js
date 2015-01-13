@@ -2,6 +2,12 @@ var express = require('express'),
     fs = require('fs'),
     _ = require('underscore'),
     app = express();
+	
+var app = require('express')();
+var session = require('express-session');
+app.use(session({
+  secret: 'octocats and octodogs'
+}));
 
 var db = {
   jogadores: JSON.parse(fs.readFileSync(__dirname + '/data/jogadores.json')),
@@ -13,13 +19,22 @@ app.set('views', 'server/views');
 app.set('view engine', 'hbs');
 
 app.get('/', function(req, res) {
-  res.render('index', db.jogadores);
+  if (req.session.views) {
+    req.session.views++;
+  } else {
+    req.session.views = 1;
+  }
+  res.render('index', {jogadores: db.jogadores, views: req.session.views});
 });
 
 app.get('/jogador/:id/', function(req, res) {
   var perfil = _.find(db.jogadores.players, function(el) { return el.steamid === req.params.id; });
   var jogos = db.jogosPorJogador[req.params.id];
-
+  if (req.session.views) {
+    req.session.views++;
+  } else {
+    req.session.views = 1;
+  }
   // calcula o número jogos que nunca foram abertos
   jogos.not_played_count = _.where(jogos.games, { playtime_forever: 0 }).length;
 
